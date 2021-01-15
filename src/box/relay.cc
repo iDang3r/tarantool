@@ -189,12 +189,20 @@ relay_send_row(struct xstream *stream, struct xrow_header *row);
 struct relay *
 relay_new(struct replica *replica)
 {
-	struct relay *relay = (struct relay *) calloc(1, sizeof(struct relay));
-	if (relay == NULL) {
-		diag_set(OutOfMemory, sizeof(struct relay), "malloc",
+	/*
+	 * We need to use posix_memalign for this struct, because it's have
+	 * specific alignas(CACHELINE_SIZE). If we use simple malloc or same
+	 * functions, we will get member access within misaligned address
+	 * (Use clang UB Sanitizer, to make sure of this)
+	 */
+	struct relay *relay;
+	if (posix_memalign((void**)&relay, alignof(struct relay),
+			   sizeof(struct relay)) != 0) {
+		diag_set(OutOfMemory, sizeof(struct relay), "posix_memalign",
 			  "struct relay");
 		return NULL;
 	}
+	memset(relay, 0, sizeof(struct relay));
 	relay->replica = replica;
 	relay->last_row_time = ev_monotonic_now(loop());
 	fiber_cond_create(&relay->reader_cond);

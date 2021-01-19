@@ -75,9 +75,10 @@ box.schema.func.create('CHECK_FROM_SQL_TO_LUA', {language = 'Lua',
                        exports = {'LUA', 'SQL'}})
 
 -- check for different types
-for i = 1, #from_sql_to_lua, 1 do
+for i = 1, #from_sql_to_lua, 1 do -- luacheck: ignore from_sql_to_lua
     test:do_execsql_test(
         "lua_sql-2.2."..i,
+        -- luacheck: ignore from_sql_to_lua
         "select check_from_sql_to_lua("..i..","..from_sql_to_lua[i][1]..")",
         {1})
 end
@@ -102,9 +103,10 @@ box.schema.func.create('CHECK_FROM_LUA_TO_SQL', {language = 'Lua',
                        exports = {'LUA', 'SQL'}})
 
 -- check for different types
-for i = 1, #from_lua_to_sql, 1 do
+for i = 1, #from_lua_to_sql, 1 do -- luacheck: ignore from_lua_to_sql
     test:do_execsql_test(
         "lua_sql-2.3."..i,
+        -- luacheck: ignore from_lua_to_sql
         "select "..tostring(from_lua_to_sql[i][1]).." = check_from_lua_to_sql("..i..")",
         {true})
 end

@@ -791,7 +791,6 @@ for testno, v in ipairs(tests11) do
                 SELECT a,b FROM log;
             ]]
         end, {
-            defaults
         })
 
     --

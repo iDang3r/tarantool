@@ -72,6 +72,7 @@ test:do_test(
 test:do_test(
     "minmax2-1.2",
     function()
+        -- luacheck: ignore sql_search_count
         return box.stat.sql().sql_search_count - sql_search_count
     end, 19)
 
@@ -89,6 +90,7 @@ test:do_test(
 test:do_test(
     "minmax2-1.4",
     function()
+        -- luacheck: ignore sql_search_count
         return box.stat.sql().sql_search_count - sql_search_count
     end, 19)
 

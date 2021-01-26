@@ -28,6 +28,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,4 +66,34 @@ int errinj_foreach(errinj_cb cb, void *cb_ctx) {
 			return res;
 	}
 	return 0;
+}
+
+void errinj_set_with_environment_vars() {
+    for (enum errinj_id i = 0; i < errinj_id_MAX; i++) {
+        struct errinj *inj = &errinjs[i];
+        const char *env_value = getenv(inj->name);
+        if (!env_value || *env_value == '\0')
+            continue;
+
+        if (inj->type == ERRINJ_INT) {
+            char *end;
+            int64_t int_value = strtoll(env_value, &end, 10);
+            if (*end == '\0')
+                inj->iparam = int_value;
+        } else if (inj->type == ERRINJ_BOOL) {
+            char *lower_env_value = (char *)calloc(strlen(env_value) + 1, sizeof(char));
+            for (size_t i = 0; env_value[i]; ++i)
+                lower_env_value[i] = tolower(env_value[i]);
+            if (strcmp(lower_env_value, "false") == 0)
+                inj->bparam = false;
+            else if (strcmp(lower_env_value, "true") == 0)
+                inj->bparam = true;
+            free(lower_env_value);
+        } else if (inj->type == ERRINJ_DOUBLE) {
+            char *end;
+            double double_value = strtod(env_value, &end);
+            if (*end == '\0')
+                inj->dparam = double_value;
+        }
+    }
 }

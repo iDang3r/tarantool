@@ -710,6 +710,7 @@ main(int argc, char **argv)
 	memtx_tx_manager_init();
 	crypto_init();
 	systemd_init();
+	errinj_set_with_environment_vars();
 	tarantool_lua_init(tarantool_bin, main_argc, main_argv);
 
 	start_time = ev_monotonic_time();

@@ -32,8 +32,7 @@ local handlers = {
     end,
 
     -- parse via sqlparser.parse and sqparser.serialize
-    ast_serialize = function(query)
-        print (query)
+    serialize = function(query)
         local handle, error = sqlparser.parse(query)
         if handle == nil then return nil, error end
 

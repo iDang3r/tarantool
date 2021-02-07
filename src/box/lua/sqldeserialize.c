@@ -113,9 +113,10 @@ sql_name_from_span(struct sql *db, const struct span_view *token)
 			struct span_view ps = {0}; \
 			IN_S(data, ps); \
 			if (ps.ptr != NULL) { \
-				strncpy((v).f, ps.ptr, ps.length); \
+				assert(sizeof((v).f) >= ps.length); \
+				memcpy((v).f, ps.ptr, ps.length); \
 			} \
-			(v).f[ps.length] = '\0'; \
+			/* (v).f[ps.length] = '\0'; */ \
 			continue; \
 		}
 

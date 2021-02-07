@@ -55,13 +55,15 @@ sql_walk_select_from(Walker * walker, Select * p, bool dryrun, const char *title
 	} while(0)
 
 // output string literal
-#define OUT_S(ibuf, s) \
+#define OUT_S_(ibuf, s, n) \
 	do { \
 		assert(s != NULL); \
-		data = ibuf_alloc(ibuf, mp_sizeof_str(strlen(s))); \
+		data = ibuf_alloc(ibuf, mp_sizeof_str(n)); \
 		assert(data != NULL); \
-		data = mp_encode_str(data, s, strlen(s)); \
+		data = mp_encode_str(data, s, n); \
 	} while(0)
+#define OUT_S(ibuf, s) \
+	OUT_S_(ibuf, s, strlen(s))
 
 // output field name and their value 
 #define OUT_V(ibuf, p, f, type) \
@@ -81,6 +83,13 @@ sql_walk_select_from(Walker * walker, Select * p, bool dryrun, const char *title
 		} else { \
 			OUT_NIL(ibuf); \
 		} \
+	} while(0)
+
+// output field name and value of string array
+#define OUT_VA(ibuf, p, f) \
+	do { \
+		OUT_S(ibuf, #f); \
+		OUT_S_(ibuf, p->f, sizeof(p->f)); \
 	} while(0)
 
 // output title of tuple, expecting map to follow
@@ -424,7 +433,7 @@ sql_walk_select(struct Walker *base, struct Select * p,
 		OUT_V(ibuf, p, selFlags, uint);
 		OUT_V(ibuf, p, iLimit, Xint);
 		OUT_V(ibuf, p, iOffset, Xint);
-		OUT_VS(ibuf, p, zSelName);
+		OUT_VA(ibuf, p, zSelName);
 		OUT_V(ibuf, p, addrOpenEphm[0], Xint);
 		OUT_V(ibuf, p, addrOpenEphm[1], Xint);
 		if ((rc = sql_walk_select_expr(base, p, false, "expr")))

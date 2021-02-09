@@ -34,6 +34,16 @@
 
 struct journal *current_journal = NULL;
 
+struct journal_queue journal_queue = {
+	.max_size = INT64_MAX,
+	.size = 0,
+	.max_len = INT64_MAX,
+	.len = 0,
+	.waiters = RLIST_HEAD_INITIALIZER(journal_queue.waiters),
+	.is_awake = false,
+	.is_ready = false,
+};
+
 struct journal_entry *
 journal_entry_new(size_t n_rows, struct region *region,
 		  journal_write_async_f write_async_cb,
@@ -54,4 +64,65 @@ journal_entry_new(size_t n_rows, struct region *region,
 	journal_entry_create(entry, n_rows, 0, write_async_cb,
 			     complete_data);
 	return entry;
+}
+
+struct journal_queue_entry {
+	/** The fiber waiting for queue space to free. */
+	struct fiber *fiber;
+	/** A link in all waiting fibers list. */
+	struct rlist in_queue;
+};
+
+/**
+ * Wake up the first waiter in the journal queue.
+ */
+static inline void
+journal_queue_wakeup_first(void)
+{
+	struct journal_queue_entry *e;
+	if (rlist_empty(&journal_queue.waiters))
+		goto out;
+	/*
+	 * When the queue isn't forcefully emptied, no need to wake everyone
+	 * else up until there's some free space.
+	 */
+	if (!journal_queue.is_ready && journal_queue_is_full())
+		goto out;
+	e = rlist_entry(rlist_first(&journal_queue.waiters), typeof(*e),
+			in_queue);
+	fiber_wakeup(e->fiber);
+	return;
+out:
+	journal_queue.is_awake = false;
+	journal_queue.is_ready = false;
+}
+
+void
+journal_queue_wakeup(bool force_ready)
+{
+	assert(!rlist_empty(&journal_queue.waiters));
+	if (journal_queue.is_awake)
+		return;
+	journal_queue.is_awake = true;
+	journal_queue.is_ready = force_ready;
+	journal_queue_wakeup_first();
+}
+
+void
+journal_wait_queue(void)
+{
+	struct journal_queue_entry entry = {
+		.fiber = fiber(),
+	};
+	rlist_add_tail_entry(&journal_queue.waiters, &entry, in_queue);
+	/*
+	 * Will be waken up by either queue emptying or a synchronous write.
+	 */
+	while (journal_queue_is_full() && !journal_queue.is_ready)
+		fiber_yield();
+
+	assert(&entry.in_queue == rlist_first(&journal_queue.waiters));
+	rlist_del(&entry.in_queue);
+
+	journal_queue_wakeup_first();
 }

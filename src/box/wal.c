@@ -765,6 +765,18 @@ wal_set_checkpoint_threshold(int64_t threshold)
 	fiber_set_cancellable(cancellable);
 }
 
+void
+wal_set_queue_max_size(int64_t size)
+{
+	journal_queue_set_max_size(size);
+}
+
+void
+wal_set_queue_max_len(int64_t len)
+{
+	journal_queue_set_max_len(len);
+}
+
 struct wal_gc_msg
 {
 	struct cbus_call_msg base;

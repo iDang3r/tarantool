@@ -18,7 +18,7 @@ test:plan(14694)
 --
 -- ["set","testdir",[["file","dirname",["argv0"]]]]
 -- ["source",[["testdir"],"\/tester.tcl"]]
-local testprefix = "func"
+
 -- Create a table to work with.
 --
 test:do_test(
@@ -1361,7 +1361,6 @@ test:do_execsql_test(
         -- </13.8.3>
     })
 
-local V = "one"
 test:do_execsql_test(
     "13.8.4",
     [[
@@ -1372,7 +1371,6 @@ test:do_execsql_test(
         -- </13.8.4>
     })
 
-V = "two"
 test:do_execsql_test(
     "13.8.5",
     [[
@@ -1384,7 +1382,7 @@ test:do_execsql_test(
     })
 
 db("cache", "flush")
-V = "three"
+local V = "three" -- luacheck: no unused
 test:do_execsql_test(
     "13.8.6",
     [[
@@ -1485,7 +1483,7 @@ test:do_test(
 test:do_test(
     "func-17.1",
     function()
-        local function testfunc1(args)
+        local function testfunc1(args) -- luacheck: no unused
             X(768, "X!cmd", [=[["error","Error %d with %s percents %p"]]=])
         end
 

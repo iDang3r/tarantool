@@ -200,7 +200,7 @@ lbox_trigger_reset(struct lua_State *L, int top, struct rlist *list,
 			trg->base.run = lbox_trigger_run;
 			trg->base.data = NULL;
 			trg->base.destroy = lbox_trigger_destroy;
-			trg->base.async = false;
+			trg->base.async = true;
 			trg->base.fiber = NULL;
 			trg->ref = LUA_NOREF;
 			trg->push_event = push_event;

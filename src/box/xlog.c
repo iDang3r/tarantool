@@ -696,6 +696,23 @@ xdir_collect_garbage(struct xdir *dir, int64_t signature, unsigned flags)
 	}
 }
 
+int
+xdir_remove_file_by_vclock(struct xdir *dir, struct vclock *to_remove)
+{
+	to_remove = vclockset_psearch(&dir->index, to_remove);
+	if (to_remove == NULL)
+		return -1;
+	const char *filename =
+		xdir_format_filename(dir, vclock_sum(to_remove), NONE);
+	int rc = unlink(filename);
+	xdir_say_gc(unlink(filename), errno, filename);
+	if (rc != 0)
+		return -1;
+	vclockset_remove(&dir->index, to_remove);
+	free(to_remove);
+	return 0;
+}
+
 void
 xdir_collect_inprogress(struct xdir *xdir)
 {

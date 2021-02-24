@@ -1,6 +1,10 @@
 name: fedora_30
 
-on: [push, pull_request]
+on:
+  push:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '*/15 * * * *'
 
 env:
   CI_MAKE: make -f .gitlab.mk

@@ -100,21 +100,22 @@ function(cdef_source varname filename modulename)
     # support anything older, than we could wrap the logics inside of
     # fficdefgen.sh script where we would need to manually convert
     # cmake lists to `-I...`
-    if (NOT POLICY CMP0067)
-        message(FATAL_ERROR "cdef_source() requires CMake 3.8+")
-    endif()
-    set(incs $<$<BOOL:${includes}>:-I;$<JOIN:${includes},;-I;>>)
+    #message(${includes})
+    #if (NOT POLICY CMP0067)
+    #    message(FATAL_ERROR "cdef_source() requires CMake 3.8+")
+    #endif()
+    #set(incs $<$<BOOL:${includes}>:-I;$<JOIN:${includes},;-I;>>)
     set(generated_sql_inc ${CMAKE_BINARY_DIR}/src/box/sql)
+    #message(${generated_sql_inc})
 
     add_custom_command(OUTPUT ${dstfile}
-        COMMAND_EXPAND_LISTS
         COMMAND
-            "${CMAKE_CXX_COMPILER}" -E -CC "${incs}" "-I${generated_sql_inc}" 
-                ${srcfile} |
-            ${CMAKE_SOURCE_DIR}/extra/fficdefgen.sh > ${tmpfile}
+            ${CMAKE_SOURCE_DIR}/extra/fficdefgen.sh
+            --cc "${CMAKE_CXX_COMPILER}" --incs \"${includes}\"
+            --extra \"${generated_sql_inc}\" --src ${srcfile} > ${tmpfile}
         COMMAND ${ECHO} 'const char ${modulename}_cdef[] =' > ${dstfile}
         COMMAND ${CMAKE_BINARY_DIR}/extra/txt2c ${tmpfile} >> ${dstfile}
-        COMMAND ${ECHO} '\\\;' >> ${dstfile}
+        COMMAND ${ECHO} '\;' >> ${dstfile}
         COMMAND ${CMAKE_COMMAND} -E remove ${tmpfile}
         DEPENDS
             ${srcfile}

@@ -15,6 +15,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -35,6 +36,16 @@ struct span_view {
 	const char * ptr;
 	uint32_t length;
 };
+
+// This is actually a bug in older gcc (i.e. gcc 4.6) and clang (i.e. 3.8)
+// which has been fixed in newer compiler versions (gcc 4.7+ and clang 6+)
+// ```
+//    struct span_view key = {0};
+//                            ^
+// sqldeserialize.c:410:29: error: missing field 'length' initializer [-Werror,-Wmissing-field-initializers]
+// This always was legal for C-style initializations, but well
+// who we are to fight with release_clang problems?
+#define SPAN_INIT() { .ptr = NULL, .length = 0}
 
 static inline char *
 sql_name_from_span(struct sql *db, const struct span_view *token)
@@ -110,7 +121,7 @@ sql_name_from_span(struct sql *db, const struct span_view *token)
 
 #define IN_VA(data, v, f) \
 		ON_(key, #f) { \
-			struct span_view ps = {0}; \
+			struct span_view ps = SPAN_INIT(); \
 			IN_S(data, ps); \
 			if (ps.ptr != NULL) { \
 				assert(sizeof((v).f) >= ps.length); \
@@ -164,12 +175,13 @@ mp_expr_new(int op, const struct span_view *token)
 static struct Expr*
 mp_decode_expr(const char **data)
 {
-	struct Expr tmp = {0}, *expr = NULL;
-	struct span_view zToken = {0};
+	struct Expr tmp, *expr = NULL;
+	struct span_view zToken = SPAN_INIT();
+	bzero(&tmp, sizeof tmp);
 
 	int items = EXPECT_MAP(data);
 	for (int j = 0; j < items; j++) {
-		struct span_view key = {0};
+		struct span_view key = SPAN_INIT();
 		EXPECT_KEY(data, key);
 
 		IN_V(data, tmp, op, uint);
@@ -237,9 +249,9 @@ mp_decode_expr_list(const char **data)
 	int n_elems = EXPECT_ARRAY(data);
 	for (int i = 0; i < n_elems; i++) {
 		int items = EXPECT_MAP(data);
-		struct span_view zName = {0}, zSpan = {0};
+		struct span_view zName = SPAN_INIT(), zSpan = SPAN_INIT();
 		for (int j = 0; j < items; j++) {
-			struct span_view key = {0};
+			struct span_view key = SPAN_INIT();
 			EXPECT_KEY(data, key);
 			ON_(key, "subexpr") {
 				struct Expr * expr = mp_decode_expr(data);
@@ -301,10 +313,12 @@ mp_decode_idlist(const char **data)
 	int n_elems = EXPECT_ARRAY(data);
 	for (int i = 0; i < n_elems; i++) {
 		int items = EXPECT_MAP(data);
-		struct span_view zName = {0};
-		struct IdList_item item = {0};
+		struct span_view zName = SPAN_INIT();
+		struct IdList_item item;
+		bzero(&item, sizeof item);
+
 		for (int j = 0; j < items; j++) {
-			struct span_view key = {0};
+			struct span_view key = SPAN_INIT();
 			EXPECT_KEY(data, key);
 
 			IN_VS(data, zName);
@@ -334,12 +348,14 @@ mp_decode_select_from(const char **data)
 	
 	for (int i = 0; i < n_elems; i++) {
 		struct SrcList_item *p = &pSrcList->a[i];
-		struct span_view zName = {0}, zAlias = {0}, zIndexedBy = {0};
+		struct span_view zName = SPAN_INIT(),
+				 zAlias = SPAN_INIT(),
+				 zIndexedBy = SPAN_INIT();
 
 		int items = EXPECT_MAP(data);
 		
 		for (int j = 0; j < items; j++) {
-			struct span_view key = {0};
+			struct span_view key = SPAN_INIT();
 			EXPECT_KEY(data, key);
 			IN_VS(data, zName);
 			IN_VS(data, zAlias);
@@ -379,7 +395,7 @@ mp_decode_select(const char **data, bool subselect)
 		assert(size == 1);
 		(void)size;
 
-		struct span_view key = {0};
+		struct span_view key = SPAN_INIT();
 		IN_S(data, key);
 
 		UNLESS_(key, "select") {
@@ -407,7 +423,7 @@ mp_decode_select(const char **data, bool subselect)
 
 		int n = EXPECT_MAP(data);
 		for (int k = 0; k < n; k++) {
-			struct span_view key = {0};
+			struct span_view key = SPAN_INIT();
 			EXPECT_KEY(data, key);
 
 			IN_V(data, *p, op, uint);

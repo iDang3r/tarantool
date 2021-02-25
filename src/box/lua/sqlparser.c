@@ -15,6 +15,7 @@
 #endif
 
 #include <stdlib.h>
+#include <strings.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -279,7 +280,8 @@ sql_ast_generate_vdbe(struct lua_State *L, struct sql_parsed_ast * ast)
 		return NULL;
 #endif
 	struct sql *db = sql_get();
-	Parse sParse = {0};
+	Parse sParse;
+	bzero(&sParse, sizeof sParse);
 	sql_parser_create(&sParse, db, current_session()->sql_flags);
 	sParse.parse_only = false;
 

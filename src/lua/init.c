@@ -69,6 +69,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "tarantoolbreakpad/tarantoolbreakpad.h"
+
 /**
  * The single Lua state of the transaction processor (tx) thread.
  */
@@ -552,6 +554,7 @@ tarantool_lua_slab_cache()
 static int
 lua_main(lua_State *L, int argc, char **argv)
 {
+	// printf("in lua_main\n");
 	assert(lua_isfunction(L, -1));
 	lua_checkstack(L, argc - 1);
 	for (int i = 1; i < argc; i++)
@@ -693,6 +696,8 @@ end:
 luajit_error:
 	diag_set(LuajitError, lua_tostring(L, -1));
 error:
+	//printf("GOT ERROR after goto error:\n");
+	//do_dump();
 	diag_move(diag_get(), diag);
 	goto end;
 }

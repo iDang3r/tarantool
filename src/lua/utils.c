@@ -1016,13 +1016,53 @@ luaT_toerror(lua_State *L)
 	return 1;
 }
 
+int 
+error_handler(lua_State* lua_state) {
+	// printf("\nMY ERROR HANDLER\n");
+	// const char* err = lua_tostring(lua_state, 1);
+
+	// printf("Error: %s\n", err);
+
+	// lua_getglobal(lua_state, "debug");
+	// lua_getfield(lua_state, -1, "traceback");
+
+	// if (lua_pcall(lua_state, 0, 1, 0)) {
+	// 	const char* err = lua_tostring(lua_state, -1);
+	// 	printf("Error in debug.traceback() call: %s\n", err);
+	// } else {
+	// 	const char* stackTrace = lua_tostring(lua_state, -1);
+	// 	printf("C++ stack traceback: %s\n", stackTrace);
+	// }
+
+	// printf("END OF MY ERROR HANDLER\n\n");
+	return 1;
+}
+
 int
 luaT_call(struct lua_State *L, int nargs, int nreturns)
 {
-	if (lua_pcall(L, nargs, nreturns, 0))
+	int hpos = lua_gettop(L) - nargs;
+	
+	lua_pushcfunction(L, error_handler);
+	lua_insert(L, hpos);
+
+	int ret = lua_pcall(L, nargs, nreturns, hpos);
+
+	lua_remove(L, hpos);
+
+	if (ret)
 		return luaT_toerror(L);
+		
 	return 0;
 }
+
+// int
+// luaT_call(struct lua_State *L, int nargs, int nreturns)
+// {
+// 	if (lua_pcall(L, nargs, nreturns, 0))
+// 		return luaT_toerror(L);
+// 	return 0;
+// }
 
 int
 luaT_cpcall(lua_State *L, lua_CFunction func, void *ud)

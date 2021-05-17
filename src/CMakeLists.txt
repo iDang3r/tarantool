@@ -187,6 +187,10 @@ add_dependencies(server build_bundled_libs)
 target_link_libraries(server core coll http_parser bit uri uuid swim swim_udp
                       swim_ev crypto mpstream crc32)
 
+
+target_link_libraries(server ${TB_LIBRARIES})
+target_link_libraries(server ${GBP_LIBRARIES})
+
 # Rule of thumb: if exporting a symbol from a static library, list the
 # library here.
 set (reexport_libraries server core misc bitset csv swim swim_udp swim_ev
@@ -279,6 +283,10 @@ add_executable(
 
 add_dependencies(tarantool build_bundled_libs)
 target_link_libraries(tarantool box ${common_libraries})
+
+
+target_link_libraries(tarantool ${TB_LIBRARIES})
+target_link_libraries(tarantool ${GBP_LIBRARIES})
 
 if (TARGET_OS_FREEBSD AND NOT TARGET_OS_DEBIAN_FREEBSD)
     # Without rdynamic FreeBSD does not export some symbols even

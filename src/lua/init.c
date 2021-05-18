@@ -779,3 +779,30 @@ tarantool_lua_free()
 	}
 #endif
 }
+
+/**
+ * Backtrace printf
+ */
+
+void
+backtrace_dump(lua_State* L)
+{
+    assert(L);
+
+    lua_Debug entry;
+    size_t depth = 0;
+
+    FILE* file = fopen("/tmp/breakpad_message.txt", "a");
+    fprintf(file, "Dump lua backtrace:\n");
+
+    while (lua_getstack(L, depth, &entry))
+    {
+        int status = lua_getinfo(L, "Sln", &entry);
+        assert(status);
+
+        fprintf(file, "%s(current line = %d): %s\n", entry.short_src, entry.currentline, entry.name ? entry.name : "main, maybe");
+        depth++;
+    }
+
+    fclose(file);
+}

@@ -797,7 +797,7 @@ backtrace_dump(lua_State* L)
     lua_Debug entry;
     size_t depth = 0;
 
-    FILE* file = fopen("/tmp/breakpad_message.txt", "a");
+    FILE* file = fopen("/tmp/breakpad_message.txt", "w");
     fprintf(file, "Dump lua backtrace:\n");
 
     while (lua_getstack(L, depth, &entry))

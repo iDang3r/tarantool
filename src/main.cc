@@ -233,6 +233,20 @@ tarantool_atfork(void)
 	box_atfork();
 }
 
+
+
+/**
+ * Handler for traceback
+ */
+
+extern "C" void
+backtrace_dump(lua_State*);
+
+static void
+traceback_handler (int /* signum */) {
+    backtrace_dump(fiber()->storage.lua.stack);
+}
+
 /**
  * Adjust the process signal mask and add handlers for signals.
  */
@@ -247,6 +261,13 @@ signal_init(void)
 
 	if (sigaction(SIGPIPE, &sa, 0) == -1)
 		panic_syserror("sigaction");
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = traceback_handler;
+    sa.sa_flags = SA_RESTART;
+
+    if (sigaction(SIGRTMIN, &sa, 0) == -1)
+        panic_syserror("sigaction");
 
 	crash_signal_init();
 

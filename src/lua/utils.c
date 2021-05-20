@@ -1415,6 +1415,7 @@ void cord_on_yield(void)
 	 * XXX: Switching fibers while running the trace leads to
 	 * code misbehaviour and failures, so stop its execution.
 	 */
+	
 	if (unlikely(tvref(g->jit_base))) {
 		char buf[256];
 		/*
@@ -1440,6 +1441,7 @@ void cord_on_yield(void)
 	 * lead to a failure on any next compiler phase.
 	 */
 	lj_trace_abort(g);
+
 
 	/*
 	 * XXX: While running GC hook (i.e. __gc  metamethod)

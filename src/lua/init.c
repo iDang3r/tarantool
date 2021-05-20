@@ -802,6 +802,7 @@ backtrace_dump(lua_State* L)
 
     while (lua_getstack(L, depth, &entry))
     {
+		printf("UNWIND\n");
         int status = lua_getinfo(L, "Sln", &entry);
         assert(status);
 

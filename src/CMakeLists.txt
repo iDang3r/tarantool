@@ -186,7 +186,20 @@ add_library(server STATIC ${server_sources})
 add_dependencies(server build_bundled_libs)
 target_link_libraries(server core coll http_parser bit uri uuid swim swim_udp
                       swim_ev crypto mpstream crc32)
+                      
+find_library(TB_LIBRARIES NAMES tarantoolbreakpad PATHS ~/tarantool/build/)
+if (TB_LIBRARIES)
+	message(STATUS "Found tarantoolbreakpad library: ${TB_LIBRARIES}")
+else (TB_LIBRARIES)
+	message(FATAL_ERROR "Could not find tarantoolbreakpad lib")
+endif (TB_LIBRARIES)
 
+find_library(GBP_LIBRARIES NAMES breakpad_client PATHS ~/tarantool/build/)
+if (GBP_LIBRARIES)
+	message(STATUS "Found breakpad_client library: ${TB_LIBRARIES}")
+else (GBP_LIBRARIES)
+	message(FATAL_ERROR "Could not find tarantoolbreakpad lib")
+endif (GBP_LIBRARIES)
 
 target_link_libraries(server ${TB_LIBRARIES})
 target_link_libraries(server ${GBP_LIBRARIES})
@@ -284,6 +297,19 @@ add_executable(
 add_dependencies(tarantool build_bundled_libs)
 target_link_libraries(tarantool box ${common_libraries})
 
+find_library(TB_LIBRARIES NAMES tarantoolbreakpad PATHS ~/tarantool/build/)
+if (TB_LIBRARIES)
+	message(STATUS "Found tarantoolbreakpad library: ${TB_LIBRARIES}")
+else (TB_LIBRARIES)
+	message(FATAL_ERROR "Could not find tarantoolbreakpad lib")
+endif (TB_LIBRARIES)
+
+find_library(GBP_LIBRARIES NAMES breakpad_client PATHS ~/tarantool/build/)
+if (GBP_LIBRARIES)
+	message(STATUS "Found breakpad_client library: ${TB_LIBRARIES}")
+else (GBP_LIBRARIES)
+	message(FATAL_ERROR "Could not find tarantoolbreakpad lib")
+endif (GBP_LIBRARIES)
 
 target_link_libraries(tarantool ${TB_LIBRARIES})
 target_link_libraries(tarantool ${GBP_LIBRARIES})

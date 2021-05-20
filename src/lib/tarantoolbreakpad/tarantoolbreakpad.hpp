@@ -1,5 +1,6 @@
 #pragma once
 
+/*
 class Tarantoolbreakpad
 {
 public:
@@ -13,3 +14,6 @@ public:
 private:
     void* pimpl_{nullptr};
 };
+*/
+
+extern "C" void do_dump();

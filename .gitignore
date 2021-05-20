@@ -166,3 +166,6 @@ static-build/build
 
 # macOS files
 .DS_Store
+
+!src/lib/tarantoolbreakpad/libtarantoolbreakpad.so
+!src/lib/tarantoolbreakpad/libbreakpad_client.a

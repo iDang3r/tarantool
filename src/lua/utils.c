@@ -33,12 +33,15 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include <trivia/util.h>
 #include <diag.h>
 #include <fiber.h>
 
 #include "serializer_opts.h"
+
+#include "tarantoolbreakpad/tarantoolbreakpad.h"
 
 int luaL_nil_ref = LUA_REFNIL;
 int luaL_map_metatable_ref = LUA_REFNIL;
@@ -1016,53 +1019,85 @@ luaT_toerror(lua_State *L)
 	return 1;
 }
 
-int 
-error_handler(lua_State* lua_state) {
-	// printf("\nMY ERROR HANDLER\n");
-	// const char* err = lua_tostring(lua_state, 1);
-
-	// printf("Error: %s\n", err);
-
-	// lua_getglobal(lua_state, "debug");
-	// lua_getfield(lua_state, -1, "traceback");
-
-	// if (lua_pcall(lua_state, 0, 1, 0)) {
-	// 	const char* err = lua_tostring(lua_state, -1);
-	// 	printf("Error in debug.traceback() call: %s\n", err);
-	// } else {
-	// 	const char* stackTrace = lua_tostring(lua_state, -1);
-	// 	printf("C++ stack traceback: %s\n", stackTrace);
-	// }
-
-	// printf("END OF MY ERROR HANDLER\n\n");
-	return 1;
+static void dumpstack(struct lua_State *L) {
+	printf("\nDUMPSTACK\n");
+	int top=lua_gettop(L);
+	for (int i = 1; i <= top; i++) {
+		printf("%d --> %s\n", i, luaL_typename(L,i));
+		switch (lua_type(L, i)) {
+		case LUA_TNUMBER:
+			printf("%g\n",lua_tonumber(L,i));
+			break;
+		case LUA_TSTRING:
+			printf("%s\n",lua_tostring(L,i));
+			break;
+		case LUA_TBOOLEAN:
+			printf("%s\n", (lua_toboolean(L, i) ? "true" : "false"));
+			break;
+		case LUA_TNIL:
+			printf("%s\n", "nil");
+			break;
+		default:
+			printf("%p\n",lua_topointer(L,i));
+			break;
+		}
+	}
 }
 
-int
-luaT_call(struct lua_State *L, int nargs, int nreturns)
-{
-	int hpos = lua_gettop(L) - nargs;
+int 
+error_handler(struct lua_State *L) {
+
+	const char* err = lua_tostring(L, 1);
+
+	lua_getglobal(L, "debug");
+	lua_getfield(L, -1, "traceback");
+
+	FILE* file = fopen("/tmp/breakpad_message.txt", "w");
+	fprintf(file, "Lua error: %s\n", err);
+	fprintf(file, "Lua stacktrace:\n");
 	
-	lua_pushcfunction(L, error_handler);
-	lua_insert(L, hpos);
+	if (lua_pcall(L, 0, 1, 0)) {
+		const char* err = lua_tostring(L, -1);
+		printf("Error in debug.traceback() call: %s\n", err);
+		} else {
+		const char* stackTrace = lua_tostring(L, -1);
+	 	fprintf(file, "%s\n", stackTrace);
+	}
 
-	int ret = lua_pcall(L, nargs, nreturns, hpos);
+	fclose(file);
 
-	lua_remove(L, hpos);
+	do_dump();
 
-	if (ret)
-		return luaT_toerror(L);
-		
-	return 0;
+	return 3;
 }
 
 // int
 // luaT_call(struct lua_State *L, int nargs, int nreturns)
 // {
-// 	if (lua_pcall(L, nargs, nreturns, 0))
+// 	int hpos = lua_gettop(L) - nargs;
+	
+// 	lua_pushcfunction(L, error_handler);
+// 	lua_insert(L, hpos);
+
+// 	int ret = lua_pcall(L, nargs, nreturns, hpos);
+
+// 	lua_remove(L, hpos);
+
+// 	if (ret)
 // 		return luaT_toerror(L);
+		
 // 	return 0;
 // }
+
+int
+luaT_call(struct lua_State *L, int nargs, int nreturns)
+{
+	// dumpstack(L);
+	// do_dump();
+	if (lua_pcall(L, nargs, nreturns, 0))
+		return luaT_toerror(L);
+	return 0;
+}
 
 int
 luaT_cpcall(lua_State *L, lua_CFunction func, void *ud)

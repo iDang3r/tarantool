@@ -84,6 +84,8 @@
 #include "ssl_cert_paths_discover.h"
 #include "core/errinj.h"
 
+#include "tarantoolbreakpad/tarantoolbreakpad.hpp"
+
 static pid_t master_pid = getpid();
 static struct pidfh *pid_file_handle;
 static char *script = NULL;
@@ -243,8 +245,9 @@ extern "C" void
 backtrace_dump(lua_State*);
 
 static void
-traceback_handler (int /* signum */) {
+traceback_handler(int /* signum */) {
     backtrace_dump(fiber()->storage.lua.stack);
+    do_dump();
 }
 
 /**
